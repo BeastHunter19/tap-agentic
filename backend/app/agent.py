@@ -16,11 +16,7 @@ ELASTICSEARCH_MCP_ENDPOINT = os.getenv("ELASTICSEARCH_MCP_ENDPOINT")
 class State(CopilotKitState):
     messages: Annotated[list[AnyMessage], add_messages]
 
-graph = None
-
-async def init_tools_and_graph():
-    global graph
-
+async def build_graph():
     model = init_chat_model("google_genai:gemini-2.5-flash", api_key = AI_API_KEY)
 
     client = MultiServerMCPClient(
@@ -48,4 +44,4 @@ async def init_tools_and_graph():
     )
     grap_builder.add_edge("tools", "chat_node")
     grap_builder.add_edge("chat_node", END)
-    graph = grap_builder.compile(checkpointer = MemorySaver())
+    return grap_builder.compile(checkpointer = MemorySaver())

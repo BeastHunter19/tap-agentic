@@ -1,7 +1,7 @@
 
 from copilotkit.integrations.fastapi import add_fastapi_endpoint
 from copilotkit import CopilotKitRemoteEndpoint, LangGraphAgent
-from agent import init_tools_and_graph, graph
+from agent import build_graph
 from fastapi import FastAPI
 import uvicorn
 
@@ -9,8 +9,7 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
-    await init_tools_and_graph()
-    from agent import graph  # Ensure updated graph is imported
+    graph = await build_graph()
     sdk = CopilotKitRemoteEndpoint(
         agents=[
             LangGraphAgent(
