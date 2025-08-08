@@ -9,6 +9,15 @@ services:
       - "8000:8000"
     secrets:
       - ai_api_key
+  frontend:
+    build: ./frontend
+    environment:
+      - LANGGRAPH_AGENT_URL=http://backend:8000/copilotkit
+      - AI_API_KEY_FILE=/run/secrets/ai_api_key
+    ports:
+      - "3000:3000"
+    secrets:
+      - ai_api_key
 secrets:
   ai_api_key:
     file: ./secrets/gemini_api_key.txt
