@@ -1,0 +1,5 @@
+langgraph==0.5.4
+langchain[google-genai]
+fastapi
+uvicorn
+copilotkit==0.1.58

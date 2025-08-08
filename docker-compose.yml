@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    environment:
+      - GOOGLE_API_KEY_FILE=/run/secrets/gemini_api_key
+    ports:
+      - "8000:8000"
+    secrets:
+      - gemini_api_key
+secrets:
+  gemini_api_key:
+    file: ./secrets/gemini_api_key.txt
