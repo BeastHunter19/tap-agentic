@@ -6,15 +6,15 @@ from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import MemorySaver
 from copilotkit import CopilotKitState
 
-GOOGLE_API_KEY_FILE = os.getenv("GOOGLE_API_KEY_FILE")
-with open(GOOGLE_API_KEY_FILE, "r") as f:
-    GOOGLE_API_KEY = f.read().strip()
+AI_API_KEY_FILE = os.getenv("AI_API_KEY_FILE")
+with open(AI_API_KEY_FILE, "r") as f:
+    AI_API_KEY = f.read().strip()
 
 class State(CopilotKitState):
     messages: Annotated[list[AnyMessage], add_messages]
 
 def chat_node(state: State) -> State:
-    model = init_chat_model("google_genai:gemini-2.5-flash", api_key = GOOGLE_API_KEY)
+    model = init_chat_model("google_genai:gemini-2.5-flash", api_key = AI_API_KEY)
     state['messages'] = model.invoke(state['messages'])
     return state
 
