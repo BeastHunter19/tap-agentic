@@ -10,6 +10,9 @@ services:
       - "8000:8000"
     secrets:
       - ai_api_key
+    depends_on:
+      elasticsearch-mcp-server:
+        condition: service_healthy
   frontend:
     build: ./frontend
     environment:
@@ -20,7 +23,8 @@ services:
     secrets:
       - ai_api_key
   elasticsearch-mcp-server:
-    image: docker.elastic.co/mcp/elasticsearch
+    build: ./elasticsearch-mcp-server
+    restart: unless-stopped
     environment:
       - ES_URL=http://host.docker.internal:9200
     command: http
