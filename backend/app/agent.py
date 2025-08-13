@@ -12,6 +12,7 @@ AI_API_KEY_FILE = os.getenv("AI_API_KEY_FILE")
 with open(AI_API_KEY_FILE, "r") as f:
     AI_API_KEY = f.read().strip()
 ELASTICSEARCH_MCP_ENDPOINT = os.getenv("ELASTICSEARCH_MCP_ENDPOINT")
+MAPS_MCP_ENDPOINT = os.getenv("MAPS_MCP_ENDPOINT")
 
 class State(CopilotKitState):
     messages: Annotated[list[AnyMessage], add_messages]
@@ -23,6 +24,10 @@ async def build_graph():
         {
             "elasticsearch": {
                 "url": ELASTICSEARCH_MCP_ENDPOINT,
+                "transport": "streamable_http",
+            },
+            "maps": {
+                "url": MAPS_MCP_ENDPOINT,
                 "transport": "streamable_http",
             }
         }
