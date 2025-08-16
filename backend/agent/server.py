@@ -1,7 +1,7 @@
 
 from copilotkit.integrations.fastapi import add_fastapi_endpoint
 from copilotkit import CopilotKitRemoteEndpoint, LangGraphAgent
-from agent import build_graph
+from agent.graph import build_graph
 from fastapi import FastAPI
 import uvicorn
 
