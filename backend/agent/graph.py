@@ -1,47 +1,44 @@
-import os
-from langgraph.graph import START, END, StateGraph
-from langchain.chat_models import init_chat_model
+"""Graph construction helper for the agent.
+
+This module exposes a single async function `build_graph` which initializes
+the model and MCP tools and returns a compiled LangGraph `StateGraph` ready
+to be served by the API. The function is intended to be called during the
+FastAPI startup event so that networked initialization happens at startup
+and not at import time.
+"""
+
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_mcp_adapters.client import MultiServerMCPClient
+
+from agent.chat_node import ChatNode
+from agent.model import create_model
 from agent.state import OverallState
+from agent.tools import get_tools
 
-AI_API_KEY_FILE = os.getenv("AI_API_KEY_FILE")
-with open(AI_API_KEY_FILE, "r") as f:
-    AI_API_KEY = f.read().strip()
-ELASTICSEARCH_MCP_ENDPOINT = os.getenv("ELASTICSEARCH_MCP_ENDPOINT")
-MAPS_MCP_ENDPOINT = os.getenv("MAPS_MCP_ENDPOINT")
 
-async def build_graph():
-    model = init_chat_model("google_genai:gemini-2.5-flash", api_key = AI_API_KEY)
+async def build_graph() -> StateGraph:
+    """Create and compile the agent StateGraph.
 
-    client = MultiServerMCPClient(
-        {
-            "elasticsearch": {
-                "url": ELASTICSEARCH_MCP_ENDPOINT,
-                "transport": "streamable_http",
-            },
-            "maps": {
-                "url": MAPS_MCP_ENDPOINT,
-                "transport": "streamable_http",
-            }
-        }
-    )
+    This function performs the following steps:
+    - Instantiate the chat model via `create_model`.
+    - Discover MCP tools asynchronously via `get_tools`.
+    - Construct the StateGraph with a Chat node and a ToolNode and wire
+        the edges.
+    - Compile the graph with an in-memory checkpointer.
 
-    tools = await client.get_tools()
+    Returns:
+            A compiled `StateGraph` instance ready for execution.
+    """
+    model = create_model()
+    tools = await get_tools()
 
-    def chat_node(state: OverallState) -> OverallState:
-        state['messages'] = model.bind_tools(tools).invoke(state['messages'])
-        return state
+    graph_builder = StateGraph(OverallState)
+    graph_builder.add_node("chat", ChatNode(model, tools))
+    graph_builder.add_node("tools", ToolNode(tools))
+    graph_builder.add_edge(START, "chat")
+    graph_builder.add_conditional_edges("chat", tools_condition)
+    graph_builder.add_edge("tools", "chat")
+    graph_builder.add_edge("chat", END)
 
-    grap_builder = StateGraph(OverallState)
-    grap_builder.add_node(chat_node)
-    grap_builder.add_node(ToolNode(tools))
-    grap_builder.add_edge(START, "chat_node")
-    grap_builder.add_conditional_edges(
-        "chat_node",
-        tools_condition,
-    )
-    grap_builder.add_edge("tools", "chat_node")
-    grap_builder.add_edge("chat_node", END)
-    return grap_builder.compile(checkpointer = MemorySaver())
+    return graph_builder.compile(checkpointer=MemorySaver())
