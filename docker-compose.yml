@@ -1,8 +1,6 @@
 services:
   backend:
     build: ./backend
-    volumes:
-      - ./backend:/app
     environment:
       - AI_API_KEY_FILE=/run/secrets/ai_api_key
       - ELASTICSEARCH_MCP_ENDPOINT=http://elasticsearch-mcp-server:8080/mcp
