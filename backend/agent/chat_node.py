@@ -8,6 +8,7 @@ or provided tools injected.
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
 
+from agent.prompts import assistant_instructions_template, get_current_date_time
 from agent.state import OverallState
 
 
@@ -47,7 +48,11 @@ class ChatNode:
         Returns:
             state: The (possibly mutated) `OverallState` with updated messages.
         """
-        state["messages"] = await self.model.bind_tools(self.tools).ainvoke(
-            state["messages"]
+        prompt = await assistant_instructions_template.ainvoke(
+            {
+                "messages": state["messages"],
+                "current_date_time": get_current_date_time(),
+            }
         )
-        return state
+        response = await self.model.bind_tools(self.tools).ainvoke(prompt)
+        return {"messages": [response]}
