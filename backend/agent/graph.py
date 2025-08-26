@@ -7,6 +7,8 @@ FastAPI startup event so that networked initialization happens at startup
 and not at import time.
 """
 
+import os
+
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -15,6 +17,22 @@ from agent.chat_node import ChatNode
 from agent.model import create_model
 from agent.state import OverallState
 from agent.tools import get_tools
+
+
+def load_langsmith_api_key_from_file() -> None:
+    """Load the LangSmith API key from a file if the environment variable is set.
+
+    This function checks for the presence of the `LANGSMITH_API_KEY_FILE`
+    environment variable. If it is set, it reads the API key from the specified
+    file and sets the `LANGSMITH_API_KEY` environment variable accordingly.
+
+    If the `LANGSMITH_API_KEY_FILE` variable is not set, this function does nothing.
+    """
+    api_key_file = os.getenv("LANGSMITH_API_KEY_FILE")
+    if api_key_file and os.path.isfile(api_key_file):
+        with open(api_key_file, "r") as file:
+            api_key = file.read().strip()
+            os.environ["LANGSMITH_API_KEY"] = api_key
 
 
 async def build_graph() -> StateGraph:
@@ -30,6 +48,10 @@ async def build_graph() -> StateGraph:
     Returns:
             A compiled `StateGraph` instance ready for execution.
     """
+
+    # Load langsmith API key from file only if set in environment
+    load_langsmith_api_key_from_file()
+
     model = create_model()
     tools = await get_tools()
 

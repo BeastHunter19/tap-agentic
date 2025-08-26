@@ -5,10 +5,15 @@ services:
       - AI_API_KEY_FILE=/run/secrets/ai_api_key
       - ELASTICSEARCH_MCP_ENDPOINT=http://elasticsearch-mcp-server:8080/mcp
       - MAPS_MCP_ENDPOINT=http://maps-mcp-server:8080/mcp
+      - LANGSMITH_TRACING=true
+      - LANGSMITH_PROJECT=tap-agentic
+      - LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com
+      - LANGSMITH_API_KEY_FILE=/run/secrets/langsmith_api_key
     ports:
       - "8000:8000"
     secrets:
       - ai_api_key
+      - langsmith_api_key
     depends_on:
       elasticsearch-mcp-server:
         condition: service_healthy
@@ -42,3 +47,5 @@ secrets:
     file: ./secrets/gemini_api_key.txt
   maps_api_key:
     file: ./secrets/google_maps_api_key.txt
+  langsmith_api_key:
+    file: ./secrets/langsmith_api_key.txt
