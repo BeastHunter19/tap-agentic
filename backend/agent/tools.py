@@ -11,9 +11,14 @@ import os
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+maps_endpoint = os.getenv("MAPS_MCP_ENDPOINT")
+
+if not maps_endpoint:
+    raise RuntimeError("ELASTICSEARCH_MCP_ENDPOINT and MAPS_MCP_ENDPOINT must be set")
+
 
 async def get_tools() -> list[BaseTool]:
-    """Discover MCP tools from the configured MCP servers.
+    """Discover MCP tools from the configured MCP servers and loads other internal tools.
 
     Environment variables used:
     - `ELASTICSEARCH_MCP_ENDPOINT`: URL of the Elasticsearch MCP server.
@@ -25,19 +30,15 @@ async def get_tools() -> list[BaseTool]:
     Raises:
         RuntimeError: If required environment variables are not set.
     """
-    es_endpoint = os.getenv("ELASTICSEARCH_MCP_ENDPOINT")
-    maps_endpoint = os.getenv("MAPS_MCP_ENDPOINT")
 
-    if not es_endpoint or not maps_endpoint:
-        raise RuntimeError(
-            "ELASTICSEARCH_MCP_ENDPOINT and MAPS_MCP_ENDPOINT must be set"
-        )
+    tools = []
 
     client = MultiServerMCPClient(
         {
-            "elasticsearch": {"url": es_endpoint, "transport": "streamable_http"},
+            # "elasticsearch": {"url": es_endpoint, "transport": "streamable_http"},
             "maps": {"url": maps_endpoint, "transport": "streamable_http"},
         }
     )
+    tools.extend(await client.get_tools())
 
-    return await client.get_tools()
+    return tools

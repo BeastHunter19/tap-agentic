@@ -4,3 +4,4 @@ langchain_mcp_adapters
 fastapi
 uvicorn
 copilotkit==0.1.58
+elasticsearch[async]

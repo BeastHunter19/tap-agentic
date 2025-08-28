@@ -3,7 +3,7 @@ services:
     build: ./backend
     environment:
       - AI_API_KEY_FILE=/run/secrets/ai_api_key
-      - ELASTICSEARCH_MCP_ENDPOINT=http://elasticsearch-mcp-server:8080/mcp
+      - ELASTICSEARCH_ENDPOINT=http://host.docker.internal:9200
       - MAPS_MCP_ENDPOINT=http://maps-mcp-server:8080/mcp
       - LANGSMITH_TRACING=true
       - LANGSMITH_PROJECT=tap-agentic
@@ -15,8 +15,6 @@ services:
       - ai_api_key
       - langsmith_api_key
     depends_on:
-      elasticsearch-mcp-server:
-        condition: service_healthy
       maps-mcp-server:
         condition: service_healthy
   frontend:
@@ -28,12 +26,6 @@ services:
       - "3000:3000"
     secrets:
       - ai_api_key
-  elasticsearch-mcp-server:
-    build: ./elasticsearch-mcp-server
-    restart: unless-stopped
-    environment:
-      - ES_URL=http://host.docker.internal:9200
-    command: http
   maps-mcp-server:
     build: ./google-maps-mcp-server
     restart: unless-stopped
