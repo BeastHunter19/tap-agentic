@@ -6,6 +6,7 @@ or provided tools injected.
 """
 
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import trim_messages
 from langchain_core.tools import BaseTool
 
 from agent.prompts import assistant_instructions_template, get_current_date_time
@@ -48,9 +49,18 @@ class ChatNode:
         Returns:
             state: The (possibly mutated) `OverallState` with updated messages.
         """
+        trimmer = trim_messages(
+            max_tokens=1048576,
+            strategy="last",
+            token_counter=self.model,
+            include_system=True,
+            allow_partial=False,
+            start_on="human",
+        )
+        trimmed_messages = await trimmer.ainvoke(state["messages"])
         prompt = await assistant_instructions_template.ainvoke(
             {
-                "messages": state["messages"],
+                "messages": trimmed_messages,
                 "current_date_time": get_current_date_time(),
             }
         )
