@@ -1,7 +1,7 @@
 """Graph construction helper for the agent.
 
 This module exposes a single async function `build_graph` which initializes
-the model and MCP tools and returns a compiled LangGraph `StateGraph` ready
+the model and tools and returns a compiled LangGraph `StateGraph` ready
 to be served by the API. The function is intended to be called during the
 FastAPI startup event so that networked initialization happens at startup
 and not at import time.
@@ -11,10 +11,11 @@ import os
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import ToolNode
 
 from agent.chat_node import ChatNode
 from agent.model import create_model
+from agent.routing import workflow_tools_condition
 from agent.state import OverallState
 from agent.tools import get_tools
 
@@ -40,9 +41,8 @@ async def build_graph() -> StateGraph:
 
     This function performs the following steps:
     - Instantiate the chat model via `create_model`.
-    - Discover MCP tools asynchronously via `get_tools`.
-    - Construct the StateGraph with a Chat node and a ToolNode and wire
-        the edges.
+    - Discover tools asynchronously via `get_tools`.
+    - Construct the StateGraph with a ReAct loop and optional optimized workflow routing.
     - Compile the graph with an in-memory checkpointer.
 
     Returns:
@@ -55,12 +55,37 @@ async def build_graph() -> StateGraph:
     model = create_model()
     tools = await get_tools()
 
-    graph_builder = StateGraph(OverallState)
-    graph_builder.add_node("chat", ChatNode(model, tools))
-    graph_builder.add_node("tools", ToolNode(tools))
-    graph_builder.add_edge(START, "chat")
-    graph_builder.add_conditional_edges("chat", tools_condition)
-    graph_builder.add_edge("tools", "chat")
-    graph_builder.add_edge("chat", END)
+    # --- Subgraph for the shopping plan workflow ---
+    workflow_graph = StateGraph(OverallState)
 
-    return graph_builder.compile(checkpointer=MemorySaver())
+    def shopping_workflow_test(state: OverallState) -> OverallState:
+        """No-op test function to mark the workflow subgraph."""
+        print("Executing shopping workflow")
+        return state
+
+    workflow_graph.add_node("shopping_workflow", shopping_workflow_test)
+    workflow_graph.add_edge(START, "shopping_workflow")
+    workflow_graph.add_edge("shopping_workflow", END)
+
+    compiled_workflow = workflow_graph.compile()
+
+    # --- Main ReAct graph with chat, tools, and workflow routing ---
+    react_graph = StateGraph(OverallState)
+
+    react_graph.add_node("chat", ChatNode(model, tools))
+    react_graph.add_node("tools", ToolNode(tools))
+    react_graph.add_node("workflow", compiled_workflow)
+
+    # Routes to shopping workflow or stays in ReAct loop depending on the situation
+    react_graph.add_edge(START, "chat")
+    react_graph.add_conditional_edges("chat", workflow_tools_condition)
+
+    # These edges form the ReAct loop together with the conditional edge above
+    react_graph.add_edge("tools", "chat")
+    react_graph.add_edge("chat", END)
+
+    react_graph.add_edge("workflow", END)
+
+    compiled_react = react_graph.compile(checkpointer=MemorySaver())
+
+    return compiled_react
