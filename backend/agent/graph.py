@@ -88,4 +88,8 @@ async def build_graph() -> StateGraph:
 
     compiled_react = react_graph.compile(checkpointer=MemorySaver())
 
+    # Visualize the graph for debugging
+    print(compiled_react.get_graph().draw_mermaid())
+    print(compiled_workflow.get_graph().draw_mermaid())
+
     return compiled_react
