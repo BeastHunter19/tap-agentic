@@ -13,8 +13,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from agent.chat_node import ChatNode
 from agent.model import create_model
+from agent.nodes.chat import ChatNode
 from agent.routing import workflow_tools_condition
 from agent.state import OverallState
 from agent.tools import get_tools
