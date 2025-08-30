@@ -29,11 +29,14 @@ def _read_api_key_from_file(path: str) -> str:
         return fh.read().strip()
 
 
-def create_model() -> BaseChatModel:
+def create_model(model_name: str) -> BaseChatModel:
     """Create and return the chat model instance.
 
     The function expects the environment variable `AI_API_KEY_FILE` to point
     to a file containing the API key.
+
+    Args:
+        model_name: The name of the model to initialize, e.g. "google_genai:gemini-2.5-flash".
 
     Returns:
         An initialized `BaseChatModel` instance ready for use.
@@ -44,4 +47,4 @@ def create_model() -> BaseChatModel:
 
     api_key = _read_api_key_from_file(api_key_file)
 
-    return init_chat_model("google_genai:gemini-2.5-flash", api_key=api_key)
+    return init_chat_model(model_name, api_key=api_key)

@@ -52,7 +52,7 @@ async def build_graph() -> StateGraph:
     # Load langsmith API key from file only if set in environment
     load_langsmith_api_key_from_file()
 
-    model = create_model()
+    model = create_model("google_genai:gemini-2.5-flash")
     tools = await get_tools()
 
     # --- Subgraph for the shopping plan workflow ---
