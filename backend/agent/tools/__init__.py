@@ -1,8 +1,12 @@
 from langchain_core.tools import BaseTool
 
 from .elasticsearch import search_offers
-from .maps import get_maps_tools
-from .workflow import start_shopping_workflow
+from .maps import (
+    find_nearby_supermarkets,
+    geocode_address,
+    get_supermarket_details,
+    get_supermarket_distances,
+)
 
 """
 This module initializes and exposes available agent tools for use within the application.
@@ -11,5 +15,10 @@ The `get_tools` function returns a list of all available tool functions.
 
 
 async def get_tools() -> list[BaseTool]:
-    maps_tools = await get_maps_tools()
-    return [search_offers, start_shopping_workflow, *maps_tools]
+    return [
+        search_offers,
+        find_nearby_supermarkets,
+        get_supermarket_distances,
+        get_supermarket_details,
+        geocode_address,
+    ]

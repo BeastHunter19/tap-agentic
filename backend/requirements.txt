@@ -5,3 +5,5 @@ fastapi
 uvicorn
 copilotkit==0.1.58
 elasticsearch[async]
+google-maps-places>=0.2.2
+google-maps-routing>=0.6.16
