@@ -11,10 +11,11 @@ import os
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import ToolNode
 
 from agent.model import create_model
 from agent.nodes.chat import ChatNode
+from agent.routing import custom_tools_condition
 from agent.state import OverallState
 from agent.tools import get_tools
 
@@ -61,7 +62,7 @@ async def build_graph() -> StateGraph:
     react_graph.add_node("tools", ToolNode(tools))
 
     react_graph.add_edge(START, "chat")
-    react_graph.add_conditional_edges("chat", tools_condition)
+    react_graph.add_conditional_edges("chat", custom_tools_condition)
     react_graph.add_edge("tools", "chat")
     react_graph.add_edge("chat", END)
 

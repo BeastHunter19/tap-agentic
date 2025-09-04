@@ -39,6 +39,7 @@ class ChatNode:
             max_history_tokens: Maximum number of tokens to keep in the
                 conversation history. Older messages are dropped.
         """
+        self.backend_tools = tools
         self.model_with_tools = model.bind_tools(tools)
         self.trimmer = trim_messages(
             max_tokens=max_history_tokens,
@@ -71,5 +72,11 @@ class ChatNode:
                 "current_date_time": get_current_date_time(),
             }
         )
+
+        # Bind frontend actions as tools if available
+        frontend_actions = state.get("copilotkit", {}).get("actions", [])
+        tools = self.backend_tools + frontend_actions
+        self.model_with_tools = self.model_with_tools.bind_tools(tools)
+
         response = await self.model_with_tools.ainvoke(prompt)
         return {"messages": [response]}

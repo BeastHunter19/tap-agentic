@@ -11,7 +11,7 @@ This module defines the routing functions used to determine the next node.
 """
 
 
-def workflow_tools_condition(state: OverallState) -> Literal["workflow", "tools", END]:
+def custom_tools_condition(state: OverallState) -> Literal["tools", END]:
     """Route to workflow, tools, or END based on tool calls in the state."""
     messages = state.get("messages", [])
     last_message = messages[-1] if messages else None
@@ -27,8 +27,11 @@ def workflow_tools_condition(state: OverallState) -> Literal["workflow", "tools"
             # fallback for object-like messages
             tool_calls = getattr(last_message, "tool_calls", None)
     if tool_calls:
+        action_names = [
+            a.get("name") for a in state.get("copilotkit", {}).get("actions", [])
+        ]
         for call in tool_calls:
-            if call.get("name") == "start_shopping_workflow":
-                return "workflow"
+            if call.get("name") in action_names:
+                return END
         return "tools"
     return END
