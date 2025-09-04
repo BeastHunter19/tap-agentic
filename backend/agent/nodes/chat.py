@@ -21,20 +21,34 @@ class ChatNode:
     makes the node easy to test and avoids import-time side effects.
 
     Attributes:
-        model: A LangChain `BaseChatModel`.
-        tools: List of `BaseTool` tool descriptors discovered from MCP servers or any other source.
+        model_with_tools: The chat model bound with the tools.
+        trimmer: Message trimmer to avoid having infinite context growth.
     """
 
-    def __init__(self, model: BaseChatModel, tools: list[BaseTool]) -> None:
+    def __init__(
+        self,
+        model: BaseChatModel,
+        tools: list[BaseTool],
+        max_history_tokens: int = 1048576,
+    ) -> None:
         """Create a ChatNode.
 
         Args:
-            model: Chat model factory / initializer that implements
-                `bind_tools(tools) -> BoundModelProtocol`.
-            tools: Sequence of tool descriptors returned by the MCP client.
+            model: LangChain chat model to use as the assistant.
+            tools: Sequence of tool descriptors.
+            max_history_tokens: Maximum number of tokens to keep in the
+                conversation history. Older messages are dropped.
         """
-        self.model = model
-        self.tools = tools
+        self.model_with_tools = model.bind_tools(tools)
+        self.trimmer = trim_messages(
+            max_tokens=max_history_tokens,
+            strategy="last",
+            token_counter=model,
+            include_system=True,
+            allow_partial=False,
+            start_on="human",
+            end_on=("human", "tool"),
+        )
 
     async def __call__(self, state: OverallState) -> OverallState:
         """Execute the chat step for the given state.
@@ -49,20 +63,13 @@ class ChatNode:
         Returns:
             state: The (possibly mutated) `OverallState` with updated messages.
         """
-        trimmer = trim_messages(
-            max_tokens=1048576,
-            strategy="last",
-            token_counter=self.model,
-            include_system=True,
-            allow_partial=False,
-            start_on="human",
-        )
-        trimmed_messages = await trimmer.ainvoke(state["messages"])
+
+        trimmed_messages = await self.trimmer.ainvoke(state["messages"])
         prompt = await assistant_instructions_template.ainvoke(
             {
                 "messages": trimmed_messages,
                 "current_date_time": get_current_date_time(),
             }
         )
-        response = await self.model.bind_tools(self.tools).ainvoke(prompt)
+        response = await self.model_with_tools.ainvoke(prompt)
         return {"messages": [response]}
