@@ -8,6 +8,8 @@ from google.type import latlng_pb2
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
+from agent.utils import get_line_distances
+
 """Tools related to maps and geolocation.
 
 The custom tools use official Google Maps Platform Python clients and are
@@ -250,20 +252,24 @@ async def find_nearby_supermarkets(
         metadata=[("x-goog-fieldmask", fieldmask)],
     )
 
+    places = getattr(resp, "places", []) or []
+    place_locations = [getattr(p, "location", None) for p in places]
+    line_distances = get_line_distances(user_location, place_locations)
+
     results: List[Dict[str, Any]] = []
-    for p in getattr(resp, "places", []) or []:
+    for p, dist in zip(places, line_distances):
         loc = getattr(p, "location", None)
         results.append(
             {
                 "id": getattr(p, "id", None),
-                "name": getattr(getattr(p, "display_name", None), "text", None)
-                or getattr(p, "display_name", None),
+                "name": getattr(p, "display_name", None),
                 "location": {
                     "lat": getattr(loc, "latitude", None),
                     "lng": getattr(loc, "longitude", None),
                 }
                 if loc
                 else None,
+                "line_distance_km": dist,
             }
         )
 
