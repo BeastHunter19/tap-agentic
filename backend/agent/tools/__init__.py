@@ -4,8 +4,8 @@ from .elasticsearch import search_offers
 from .maps import (
     find_nearby_supermarkets,
     geocode_address,
+    get_accurate_supermarket_distances,
     get_supermarket_details,
-    get_supermarket_distances,
 )
 
 """
@@ -18,7 +18,7 @@ async def get_tools() -> list[BaseTool]:
     return [
         search_offers,
         find_nearby_supermarkets,
-        get_supermarket_distances,
-        get_supermarket_details,
         geocode_address,
+        get_accurate_supermarket_distances,
+        get_supermarket_details,
     ]

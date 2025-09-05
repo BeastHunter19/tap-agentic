@@ -147,7 +147,7 @@ class FindNearbySupermarketsInput(BaseModel):
     )
 
 
-class GetSupermarketDistancesInput(BaseModel):
+class GetAccurateSupermarketDistancesInput(BaseModel):
     """Inputs for computing distances/durations to supermarkets using Routes API."""
 
     user_location: Location = Field(description="User location coordinates.")
@@ -206,7 +206,7 @@ async def find_nearby_supermarkets(
     the supermarket to offers and compute distances. The results are ordered
     by ascending distance from the user's location (the distance is just a
     straight line, not travel distance). You can use this distance ordering
-    as a distance estimate and avoid calling get_supermarket_distances unless
+    as a distance estimate and avoid calling get_accurate_supermarket_distances unless
     you need to decide between a few close candidates and need precise travel distances.
 
     Returns:
@@ -270,8 +270,8 @@ async def find_nearby_supermarkets(
     return results
 
 
-@tool(args_schema=GetSupermarketDistancesInput)
-async def get_supermarket_distances(
+@tool(args_schema=GetAccurateSupermarketDistancesInput)
+async def get_accurate_supermarket_distances(
     user_location: Location,
     destinations: Sequence[Location],
     travel_mode: Literal["driving", "walking", "bicycling"] = "driving",
