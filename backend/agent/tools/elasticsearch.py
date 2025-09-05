@@ -5,6 +5,9 @@ from elasticsearch import AsyncElasticsearch
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
+from agent.model import create_model
+from agent.prompts import generate_dsl_instructions_template
+
 """Tools for interacting with Elasticsearch to search for offers."""
 
 # Lazy client creation to avoid initializing when not used
@@ -21,64 +24,57 @@ def _get_es_client() -> AsyncElasticsearch:
     return _es_client
 
 
-# ---- Pydantic schema for search_offers ----
+# ---- Pydantic schemas for custom tools ----
 
 
-class SearchOffersInput(BaseModel):
-    """Inputs for searching the offers index."""
-
-    query: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Elasticsearch query DSL (e.g., {'match': {'product': 'milk'}}).",
-    )
-    filters: Optional[List[Dict[str, Any]]] = Field(
-        default=None,
-        description="List of filter clauses (e.g., [{'term': {'category': 'dairy'}}]).",
-    )
-    sort: Optional[List[Dict[str, Any]]] = Field(
-        default=None,
-        description="Sort directives (e.g., [{'price': 'asc'}]).",
-    )
-    size: int = Field(10, description="Maximum number of results to return.")
+class GenerateDSLInput(BaseModel):
+    query: str = Field(..., description="User's natural language search request.")
+    size: int = Field(10000, description="Number of results to return.")
 
 
-@tool(args_schema=SearchOffersInput)
-async def search_offers(
-    query: Optional[Dict[str, Any]] = None,
-    filters: Optional[List[Dict[str, Any]]] = None,
-    sort: Optional[List[Dict[str, Any]]] = None,
-    size: int = 10,
-) -> List[Dict[str, Any]]:
-    """Search for offers in the Elasticsearch index.
-    The available fields are:
-    - name (text): Name of the product or offer.
-    - price (float): Price of the product or offer.
-    - quantity (float): Quantity per unit (e.g., 1.0 for 1L).
-    - total_quantity (float): Total quantity available.
-    - count (float): Number of items in the offer.
-    - uom (keyword): Unit of measure (e.g., "kg", "L", "each").
-    - category (keyword): Category of the product (e.g., "dairy", "produce").
-    - type (keyword): Type of offer or product.
-    - notes (text): Additional notes or description.
-    - source (keyword): Source of the offer (e.g., supermarket name).
-    - flyer_checksum (keyword): Checksum of the flyer or source document.
-    - validity_from (date): Start date of offer validity.
-    - validity_to (date): End date of offer validity.
+# --- Custom tools for Elasticsearch ---
 
-    Returns:
-        A list of offers matching the search criteria, each including
-        details such as product name, price, validity period, and
-        supermarket information.
+# Lazy LLM initialization
+_dsl_llm_json: Optional[Any] = None
+
+
+def _get_dsl_llm_json():
+    global _dsl_llm_json
+    if _dsl_llm_json is None:
+        _dsl_llm = create_model("google_genai:gemini-2.5-flash", temperature=0.3)
+        # Minimal JSON schema for forcing JSON mode
+        _dsl_schema = {
+            "title": "ElasticsearchDSL",
+            "type": "object",
+            "properties": {
+                "dsl": {
+                    "type": "object",
+                    "description": "Elasticsearch DSL query to be used in the 'query' field of an Elasticsearch search.",
+                }
+            },
+            "required": ["dsl"],
+        }
+        _dsl_llm_json = _dsl_llm.with_structured_output(_dsl_schema)
+    return _dsl_llm_json
+
+
+@tool(args_schema=GenerateDSLInput)
+async def search_offers(query: str, size: int = 10000) -> List[Dict[str, Any]]:
     """
-    # Build the query body
-    body: Dict[str, Any] = {"query": {"bool": {}}}
-    if query:
-        body["query"]["bool"]["must"] = query
-    if filters:
-        body["query"]["bool"]["filter"] = filters
-    if sort:
-        body["sort"] = sort
+    Search for offers in Elasticsearch using a natural language query.
+    This tool combines DSL generation and execution to return matching offers.
+    Be sure to only include the essential parts of the request that relate to
+    the products or categories to search for. You can specify the number of results
+    to return with the `size` parameter, but ONLY if the user explicitly requests it
+    or when you want to show the results directly to the user; otherwise, if the results
+    are to be processed internally (e.g., for filtering or ranking), keep the default size.
+    """
+    model = _get_dsl_llm_json()
+    chain = generate_dsl_instructions_template | model
+    result = await chain.ainvoke({"query": query})
 
     client = _get_es_client()
+    body = {"query": result["dsl"]}
     resp = await client.search(index="offers", body=body, size=size)
     return [hit["_source"] for hit in resp["hits"]["hits"]]
+    return result["dsl"]
