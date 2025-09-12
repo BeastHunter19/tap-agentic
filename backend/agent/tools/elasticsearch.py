@@ -77,4 +77,5 @@ async def search_offers(query: str, size: int = 10000) -> List[Dict[str, Any]]:
     body = {"query": result["dsl"]}
     resp = await client.search(index="offers", body=body, size=size)
     return [hit["_source"] for hit in resp["hits"]["hits"]]
-    return result["dsl"]
+
+
