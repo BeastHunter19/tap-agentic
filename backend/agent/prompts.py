@@ -130,6 +130,23 @@ The available fields are:
 - validity_from (date): Start date of offer validity.
 - validity_to (date): End date of offer validity.
 
+Examples:
+
+User request: Find me deals on apples and bananas.
+Generated DSL query:
+"multi_match": {
+    "query": "banana apple",
+    "fields": [
+        "name^3",
+        "type^2",
+        "category^1"
+    ],
+    "type": "best_fields",
+    "fuzziness": "AUTO"
+}
+
+User request: I want discounts on dairy products and bread.
+
 Respond exclusively with the generated DSL query, without explanations or additional comments.
 """
 
