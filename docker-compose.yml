@@ -4,7 +4,6 @@ services:
     environment:
       - AI_API_KEY_FILE=/run/secrets/ai_api_key
       - ELASTICSEARCH_ENDPOINT=http://host.docker.internal:9200
-      - MAPS_MCP_ENDPOINT=http://maps-mcp-server:8080/mcp
       - LANGSMITH_TRACING=true
       - LANGSMITH_PROJECT=tap-agentic
       - LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com
