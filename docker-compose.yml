@@ -9,6 +9,8 @@ services:
       - LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com
       - LANGSMITH_API_KEY_FILE=/run/secrets/langsmith_api_key
       - MAPS_API_KEY_FILE=/run/secrets/maps_api_key
+      - EMBEDDING_MODEL_NAME=BAAI/bge-m3
+      - EMBEDDING_API_URL=http://host.docker.internal:8100
     ports:
       - "8000:8000"
     secrets:

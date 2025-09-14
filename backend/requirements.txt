@@ -1,6 +1,10 @@
 langgraph==0.5.4
 langchain[google-genai]
 langchain_mcp_adapters
+langchain-elasticsearch
+langchain-community
+langchain-openai
+lark
 fastapi
 uvicorn
 copilotkit==0.1.58

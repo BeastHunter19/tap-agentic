@@ -35,7 +35,7 @@ Operational principles (ReAct):
 
 Tools to use (strictly follow the input parameter schemas):
 
-1) search_offers (Elasticsearch): search for deals in the database. Use this tool to find promotions
+1) semantic_offer_search (Elasticsearch): search for deals in the database. Use this tool to find promotions
 matching the user's request. Provide the search criteria in the `query` parameter as a natural language string.
 (e.g., "I want to find deals on apples and bananas" or "Show me discounts on dairy products"). Be sure to only
 include the essential parts of the request that relate to the products or categories to search for.
@@ -75,7 +75,7 @@ the supermarkets found (using the `source` field of the deals).
 4) If multiple options are close in price/deals, use get_accurate_supermarket_distances on the main candidates
 to help your decision based on distance/time (travel mode requested by the user or driving by default).
 5) Optional: for the final choice, call get_supermarket_details for address/link.
-6) Deliver a summary with a single option if possible, otherwise 2–3 best alternatives:
+6) Deliver a summary with a single option if possible, otherwise 2/3 best alternatives:
 supermarket, (estimated) distance/time, coverage of deals, possible Google Maps link.
 
 ---------
@@ -100,59 +100,4 @@ assistant_instructions_template = ChatPromptTemplate(
         ("system", assistant_instructions),
         MessagesPlaceholder(variable_name="messages"),
     ],
-)
-
-
-generate_dsl_instructions = """
-You are an expert in generating DSL queries for Elasticsearch. Your task is to translate the user's request
-into an optimized DSL query, following these rules:
-
-- Analyze the user's request and clearly identify the search criteria (products, categories, conditions, etc.).
-- Generate only the DSL query necessary for searching deals, without including details about location or other aspects not requested.
-- Strictly follow the syntax and structure of Elasticsearch DSL queries.
-- Use the most appropriate fields and operators to obtain relevant and precise results.
-- Do not include unnecessary data or parameters; keep the query simple and focused.
-- If the request is ambiguous, choose the most common and useful interpretation for searching deals.
-- Always use fuzzy matching to ensure broader results since the user may not know the exact product names or categories.
-
-The available fields are:
-- name (text): Name of the product or offer.
-- price (float): Price of the product or offer.
-- quantity (float): Quantity per unit (e.g., 1.0 for 1L).
-- total_quantity (float): Total quantity available.
-- count (float): Number of items in the offer.
-- uom (keyword): Unit of measure (e.g., "kg", "L", "each").
-- category (keyword): Category of the product (e.g., "dairy", "produce").
-- type (keyword): Type of offer or product.
-- notes (text): Additional notes or description.
-- source (keyword): Source of the offer (e.g., supermarket name).
-- flyer_checksum (keyword): Checksum of the flyer or source document.
-- validity_from (date): Start date of offer validity.
-- validity_to (date): End date of offer validity.
-
-Examples:
-
-User request: Find me deals on apples and bananas.
-Generated DSL query:
-"multi_match": {
-    "query": "banana apple",
-    "fields": [
-        "name^3",
-        "type^2",
-        "category^1"
-    ],
-    "type": "best_fields",
-    "fuzziness": "AUTO"
-}
-
-User request: I want discounts on dairy products and bread.
-
-Respond exclusively with the generated DSL query, without explanations or additional comments.
-"""
-
-generate_dsl_instructions_template = ChatPromptTemplate(
-    [
-        ("system", generate_dsl_instructions),
-        ("human", "{query}"),
-    ]
 )

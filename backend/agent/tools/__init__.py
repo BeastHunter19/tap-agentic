@@ -1,6 +1,6 @@
 from langchain_core.tools import BaseTool
 
-from .elasticsearch import search_offers
+from .elasticsearch import semantic_offer_search
 from .maps import (
     find_nearby_supermarkets,
     geocode_address,
@@ -16,7 +16,7 @@ The `get_tools` function returns a list of all available tool functions.
 
 async def get_tools() -> list[BaseTool]:
     return [
-        search_offers,
+        semantic_offer_search,
         find_nearby_supermarkets,
         geocode_address,
         get_accurate_supermarket_distances,
