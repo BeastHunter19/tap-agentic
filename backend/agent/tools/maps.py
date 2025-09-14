@@ -1,3 +1,9 @@
+"""Tools related to maps and geolocation.
+
+The custom tools use official Google Maps Platform Python clients and are
+designed to be clear for ReAct-style agents (explicit params and behaviors).
+"""
+
 import os
 from typing import Any, Dict, List, Literal, Optional, Sequence
 from urllib.parse import quote
@@ -9,12 +15,6 @@ from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
 from agent.utils import get_line_distances
-
-"""Tools related to maps and geolocation.
-
-The custom tools use official Google Maps Platform Python clients and are
-designed to be clear for ReAct-style agents (explicit params and behaviors).
-"""
 
 # -----------------------------
 # Google Maps clients & helpers

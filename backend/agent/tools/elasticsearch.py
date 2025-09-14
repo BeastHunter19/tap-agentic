@@ -1,3 +1,13 @@
+"""Semantic search tools for querying offers in Elasticsearch using dense vector similarity.
+
+This module provides:
+- A semantic search tool (`semantic_offer_search`) that leverages LangChain's SelfQueryRetriever and ElasticsearchStore.
+- Support for natural language queries and filters over offer metadata fields.
+- Integration with a local OpenAI-compatible embedding server for query embedding.
+
+The elasticsearch index should be pre-populated with offer data including dense vector embeddings.
+"""
+
 import os
 from typing import Any, Dict, List, Optional
 
@@ -14,17 +24,6 @@ from langchain_elasticsearch import DenseVectorStrategy, ElasticsearchStore
 from pydantic import BaseModel, Field
 
 from agent.model import create_model
-
-"""
-Semantic search tools for querying offers in Elasticsearch using dense vector similarity.
-
-This module provides:
-- A semantic search tool (`semantic_offer_search`) that leverages LangChain's SelfQueryRetriever and ElasticsearchStore.
-- Support for natural language queries and filters over offer metadata fields.
-- Integration with a local OpenAI-compatible embedding server for query embedding.
-
-The elasticsearch index should be pre-populated with offer data including dense vector embeddings.
-"""
 
 # Lazy initialization
 _embedding_model: Optional[Embeddings] = None

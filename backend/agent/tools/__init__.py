@@ -1,3 +1,8 @@
+"""
+This module initializes and exposes available agent tools for use within the application.
+The `get_tools` function returns a list of all available tool functions.
+"""
+
 from langchain_core.tools import BaseTool
 
 from .elasticsearch import semantic_offer_search
@@ -7,11 +12,6 @@ from .maps import (
     get_accurate_supermarket_distances,
     get_supermarket_details,
 )
-
-"""
-This module initializes and exposes available agent tools for use within the application.
-The `get_tools` function returns a list of all available tool functions.
-"""
 
 
 async def get_tools() -> list[BaseTool]:

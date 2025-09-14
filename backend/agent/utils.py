@@ -1,6 +1,4 @@
-"""
-Utility functions for geospatial calculations and other agent helpers.
-"""
+"""Utility functions for geospatial calculations and other agent helpers."""
 
 from haversine import Unit, haversine_vector
 

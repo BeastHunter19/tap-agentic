@@ -1,5 +1,4 @@
-"""
-Stub tool for workflow routing.
+"""Stub tool for workflow routing.
 
 This module defines a tool that does not perform any action, but serves as an explicit signal
 for the LLM to indicate when the user wants to trigger the full shopping plan workflow.

@@ -1,14 +1,13 @@
+"""Custom routing logic for the agentic graph.
+
+This module defines the routing functions used to determine the next node.
+"""
+
 from typing import Literal
 
 from langgraph.graph import END
 
 from agent.state import OverallState
-
-"""
-Custom routing logic for the agentic graph.
-
-This module defines the routing functions used to determine the next node.
-"""
 
 
 def custom_tools_condition(state: OverallState) -> Literal["tools", END]:
