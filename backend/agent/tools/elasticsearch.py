@@ -16,6 +16,7 @@ from langchain.chains.query_constructor.schema import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_community.embeddings.infinity import InfinityEmbeddings
 from langchain_community.query_constructors.elasticsearch import ElasticsearchTranslator
+from langchain_core.documents import Document
 
 # from httpx_retries import Retry, RetryTransport
 from langchain_core.embeddings import Embeddings
@@ -65,6 +66,18 @@ def _get_vector_store() -> ElasticsearchStore:
             vector_query_field="embeddings",
         )
     return _vector_store
+
+
+def elastic_doc_builder(hit: Dict) -> Document:
+    """Build a Document from an Elasticsearch hit."""
+
+    print(hit)
+    source = hit.get("_source", {})
+    if not source:
+        return Document(page_content="Missing offer", metadata={})
+    exclude_fields = {"embeddings", "flyer_checksum", "name"}
+    metadata = {k: v for k, v in source.items() if k not in exclude_fields}
+    return Document(page_content=source.get("name", "Missing offer"), metadata=metadata)
 
 
 def _get_retriever() -> SelfQueryRetriever:
@@ -149,6 +162,10 @@ def _get_retriever() -> SelfQueryRetriever:
             metadata_field_info=attributes,
             enable_limit=True,
             verbose=True,
+            search_kwargs={
+                "k": 20,
+                "doc_builder": elastic_doc_builder,
+            },
         )
     return _retriever
 
