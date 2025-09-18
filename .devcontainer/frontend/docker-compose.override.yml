@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../.devcontainer/frontend/Dockerfile
+    volumes:
+      - ..:/workspaces:cached
+      - node_modules:/workspaces/tap-agentic/frontend/node_modules
+      - next_build:/workspaces/tap-agentic/frontend/.next
+    command: sleep infinity
+volumes:
+  node_modules:
+  next_build:
