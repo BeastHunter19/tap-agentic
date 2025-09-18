@@ -25,7 +25,27 @@
   // "forwardPorts": [],
 
   // Uncomment the next line if you want start specific services in your Docker Compose config.
-  "runServices": ["backend"]
+  "runServices": [
+    "backend"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff"
+      ]
+      ,
+      "settings": {
+        "[python]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          },
+          "editor.defaultFormatter": "charliermarsh.ruff"
+        }
+      }
+    }
+  }
 
   // Uncomment the next line if you want to keep your containers running after VS Code shuts down.
   // "shutdownAction": "none",
